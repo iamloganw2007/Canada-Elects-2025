@@ -1823,7 +1823,7 @@ function endQuarterCore(){const G=SIM.gov;if(G.ind.safe==null)G.ind.safe=50;if(G
  {const sz=(G.c[SIM.me]||0)/32,qr=G.qpR==null?.5:G.qpR,rg=Math.min(6,Math.round(1+sz+1.5*qr)),c1=Math.min(6,Math.max(G.cap,rg));G.cap=c1;G.log.unshift(x('Nouveau trimestre : le capital politique se régénère ('+c1+') selon la taille de votre caucus et vos succès en période de questions.','New quarter: political capital regenerates ('+c1+') based on your caucus size and question-period success.'))}G.q++;G.bdone=false;G.apo=2;G.mb=null;
  G.deals=G.deals.filter(d=>{if(d.t==='coal'){if(G.role==='gov'&&G.coh<35&&rnd()<.3){G.log.unshift(x('La coalition avec '+P[d.k].n+' éclate.','The coalition with '+P[d.k].n+' collapses.'));releaseSlots(d.k);return false}return true}if(G.q>d.until){G.log.unshift(x('L’entente avec '+P[d.k].n+' prend fin.','The deal with '+P[d.k].n+' expires.'));return false}return true});aiDeals();censureCheck(G);
  if(G.role==='gov'){for(const s of Object.keys(st.cab)){const mi=st.cab[s];if(rnd()<MP[mi][4]*(1+(60-G.coh)/100)){G.pend.push({i:SCI,q:G.q,m:mi});break}}}
- aiPollDrift(G);(G.pt=G.pt||[]).push(govTruth(G));G.hist.push(Math.round(G.appr));G.hs.a.push(G.appr);G.hs.c.push(G.coh);G.hs.d.push(G.debt);
+ if(G.role==='opp')aiGovTick(G);aiPollDrift(G);(G.pt=G.pt||[]).push(govTruth(G));pollNews(G);G.hist.push(Math.round(G.appr));G.hs.a.push(G.appr);G.hs.c.push(G.coh);G.hs.d.push(G.debt);
  if(G.q%4!==2)G.offer.forEach(bi=>LEG.shelveBill(G,bi,1));const keepOK=(G.q%4===2&&!G.fell&&G.q<16)?queuedBills(G):null;LEG.tick(G);newOffer();if(keepOK)G.queued=keepOK;sessionCycle();drawGE(rnd()<.35?2:1);
  if(G.q%4===0&&G.q<16)G.log.unshift(x('Budget de confiance à voter ce trimestre.','A confidence budget vote is due this quarter.'));
  if(G.log.length>80)G.log.length=80}
@@ -1909,7 +1909,7 @@ function aiPollDrift(G){const w=G.aiw||(G.aiw=[0,0,0,0,0]),v=G.aiv||(G.aiv=[0,0,
  /* Leadership renewal: an opposition party polling 4+ points under its election result for 3 straight quarters may replace its leader (once a term) and gets a bounce that fades over the following quarters. */
  {const t=govTruth(G);G.ldr=G.ldr||{};for(const k of [0,1,2,3,4]){if(k===gv||k===me||b[k]<.08)continue;const L=G.ldr[k]||(G.ldr[k]={n:0,done:0});L.n=t[k]<b[k]-.04?L.n+1:0;if(L.n>=3&&!L.done&&rnd()<.6){L.done=1;w[k]=Math.min(.4,w[k]+.28);v[k]=Math.max(v[k],.05);G.log.unshift(P[k].n+x(' se choisit un nouveau chef : lune de miel dans les sondages.',' picks a new leader and gets a honeymoon in the polls.'))}}}}
 /* Governing-party vote swing, in share points: GOV_SWING is the most approval alone can move it, GOV_COST the cost of governing, GOV_FATIGUE the drag per quarter, TERM_FATIGUE per previous term. */
-let GOV_SWING=.085,GOV_COST=.012,GOV_FATIGUE=.0025,TERM_FATIGUE=.012,GOV_CEIL=.44,SHOCK_P=.22;
+let GOV_SWING=.085,GOV_COST=.008,GOV_FATIGUE=.0018,TERM_FATIGUE=.012,GOV_CEIL=.44,SHOCK_P=.22;
 /* Voter flows (LPC, CPC, NDP, BQ, GPC): VFLOW[a][b] is how readily a's voters switch to b (rough Canadian second-choice patterns). Liberal gains come mostly from the NDP, Greens and Bloc; Conservative voters are the stickiest. */
 const VFLOW=[[0,.30,.38,.14,.18],[.52,0,.14,.20,.14],[.52,.12,0,.16,.20],[.36,.24,.26,0,.14],[.36,.08,.44,.12,0]];
 const SHOCKS=[
@@ -1934,7 +1934,7 @@ function govTruth(G){const b=G.pb||(G.pb=provShares().slice()),gv=G.gv,me=SIM.me
  /* 3. Voter flows: the swing moves between the government and each party by VFLOW, and no party loses more than 35 % of its share to the government (15 % for the official opposition, whose base is the stickiest). When the government slips, its main rival picks up an extra anti-incumbent share. */
  const oth=[0,1,2,3,4].filter(k=>k!==gv);
  if(D>0){let left=D;for(let pass=0;pass<3&&left>1e-6;pass++){const opp0=oth.slice().sort((a,c)=>b[c]-b[a])[0],cap=oth.map(k=>Math.max(0,s[k]-b[k]*(k===opp0?.85:.65))),wt=oth.map((k,i)=>cap[i]>0?s[k]*VFLOW[k][gv]:0),W=wt.reduce((a,c)=>a+c,0);if(W<=0)break;let used=0;oth.forEach((k,i)=>{const take=Math.min(cap[i],left*wt[i]/W);s[k]-=take;used+=take});left-=used}s[gv]+=D-left}
- else if(D<0){const lead=oth.slice().sort((a,c)=>s[c]-s[a])[0],wt=oth.map(k=>Math.sqrt(s[k])*VFLOW[gv][k]*(k===lead?1.4:1)),W=wt.reduce((a,c)=>a+c,0);oth.forEach((k,i)=>s[k]+=-D*wt[i]/W);s[gv]+=D}
+ else if(D<0){const lead=oth.slice().sort((a,c)=>s[c]-s[a])[0],wt=oth.map(k=>Math.sqrt(s[k])*VFLOW[gv][k]*(k===lead&&k!==me?1.4:1)),W=wt.reduce((a,c)=>a+c,0);oth.forEach((k,i)=>s[k]+=-D*wt[i]/W);s[gv]+=D}
  /* 4. The same soft ceiling for every other party (a collapsing government can't hand its rival a 50 % landslide either); the excess flows to the others by VFLOW. */
  for(let k=0;k<5;k++)if(k!==gv&&s[k]>GOV_CEIL){const ex=(s[k]-GOV_CEIL)*.55,o=[0,1,2,3,4].filter(j=>j!==k),wt=o.map(j=>s[j]*(VFLOW[k][j]+.05)),W=wt.reduce((a,c)=>a+c,0);s[k]-=ex;o.forEach((j,i)=>s[j]+=ex*wt[i]/W)}
  /* 5. The official opposition becomes the home of anti-government voters: the bigger the government's lead past 6 points, the more of that lead consolidates behind it (60 % from the government, 40 % from third parties). */
@@ -2584,15 +2584,21 @@ function aiCampShocks(){if(!SIM.rvLog)SIM.rvLog=[];const pr=provShares(),ld=pr.i
  P.forEach((_,k)=>{if(k!==SIM.me){cv[k]=.85*cv[k]+(rnd()+rnd()-1)*.014;SIM.nat[k]+=cv[k]}});
  P.forEach((_,k)=>{if(k===SIM.me||rnd()>(late?.24:.16))return;const up=rnd()<Math.max(.25,Math.min(.65,.5-(pr[k]-.2)*1.2+(k===ld?-.05:0))),m=(.03+rnd()*.07)*(late?1.3:1),tx=(up?AIUP:AIDN)[(rnd()*4)|0];
   SIM.nat[k]+=up?m:-m;SIM.rvLog.push({k,a:99,t:tx})})}
-/* Campaigns tighten: a big lead brings scrutiny on the front-runner, its soft supporters drift off (trend, so it accumulates over the campaign), and anti-front-runner voters consolidate behind the runner-up. The player gets the scrutiny when leading but no free consolidation when trailing: comebacks have to be earned. */
+/* Campaigns tighten: a big lead brings scrutiny on the front-runner, its soft supporters drift off (trend, so it accumulates over the campaign), and anti-front-runner voters consolidate behind the runner-up. This keeps the top two inside a realistic band (real 2019 and 2021 campaigns stayed within about 5 points). The scrutiny is the same for an AI front-runner; a trailing player only gets the consolidation once 8+ points back, so comebacks still have to be earned. Any party above 42 % also meets a soft ceiling. */
 function campTighten(pr){const me=SIM.me,o=pr.map((v,k)=>[v,k]).sort((a,c)=>c[0]-a[0]),ld=o[0][1],ru=o[1][1],L=o[0][0]-o[1][0]-.04;
  /* War room: when the player gains ground in a day while ahead or within 8 points of the lead, the strongest AI rival rebuts part of it (more when the player leads). */
  {const h=SIM.hist&&SIM.hist[SIM.hist.length-1],gain=h&&me>=0?pr[me]-h[me]:0,rv=o.find(a=>a[1]!==me)[1];
   if(gain>.002&&pr[me]>=o[0][0]-.08){const gl=gain/(pr[me]*(1-pr[me])),f=me===ld?.45:.3;SIM.nat[me]-=gl*f;SIM.nat[rv]+=gl*f*.5;(SIM.rvLog=SIM.rvLog||[]).push({k:rv,a:99,t:['riposte aux gains de '+P[me].n+'.','pushes back on '+P[me].n+'’s gains.']})}}
+ pr.forEach((v,k)=>{if(v>.42)SIM.nat[k]-=(v-.42)*.12});
  if(L<=0)return;
- if(ld===me){SIM.nat[ld]-=L*.05;SIM.trend[ld]-=L*.045}else{SIM.nat[ld]-=L*.015;SIM.trend[ld]-=L*.01}
- if(ru!==me){SIM.nat[ru]+=L*.065;SIM.trend[ru]+=L*.02}
+ SIM.nat[ld]-=L*.1+L*L*3;SIM.trend[ld]-=L*.05;
+ const Lr=ru===me?Math.max(0,o[0][0]-o[1][0]-.08):L;SIM.nat[ru]+=Lr*.09+Lr*Lr*2.5;SIM.trend[ru]+=Lr*.025;
  for(const [,k] of o.slice(2))if(k!==me)SIM.nat[k]-=L*.006}
+/* Third parties have real campaigns: each AI party outside the top two carries a slow-moving 'story' (leader moments, debate breakouts, strategic-vote squeezes) that can lift or sink it by several points over a few weeks, as the NDP did in 2019. Applied to the trend as a level, so it fades back as the story does. */
+function campThird(){const pr=provShares(),me=SIM.me,top=pr.map((v,k)=>[v,k]).sort((a,c)=>c[0]-a[0]).slice(0,2).map(a=>a[1]),sv=SIM.sv=SIM.sv||P.map(()=>0);
+ P.forEach((_,k)=>{if(k===me||pr[k]<.025)return;const third=!top.includes(k);let n=third?.93*sv[k]+(rnd()+rnd()+rnd()-1.5)*.05:.9*sv[k];
+  if(third&&rnd()<.045){const up=rnd()<.5,m=.12+rnd()*.14;n+=up?m:-m;(SIM.rvLog=SIM.rvLog||[]).push({k,a:99,t:up?['décolle dans les sondages après un moment fort de son chef.','surges after a strong moment for its leader.']:['s’effrite : ses électeurs se tournent vers le vote stratégique.','slips as its voters turn to strategic voting.']})}
+  n=Math.max(-.4,Math.min(.4,n));SIM.trend[k]+=n-sv[k];sv[k]=n})}
 /* The government's record on the issue of the day: a strong record on a top concern helps it, a weak one hurts it and lifts the party that owns the issue. Bounded (roughly ±3 pts over a campaign once tightening is counted) so good governing pays without guaranteeing a landslide. */
 function campRecord(){if(!recOK())return;const R0=SIM.rec,t=salTheme(),k=Object.keys(CNTH).find(c=>CNTH[c]===t);if(!k||R0.ind[k]==null)return;
  const v=Math.max(-1,Math.min(1,(R0.ind[k]-50)/35)),wt=Math.max(.6,Math.min(1.6,(R0.cn[k]||1)/1.1)),gv=R0.gv;SIM.nat[gv]+=.011*v*wt;
@@ -2601,7 +2607,7 @@ function campRecord(){if(!recOK())return;const R0=SIM.rec,t=salTheme(),k=Object.
 function nextDayCore(){if(SIM.day>DAYS)return;if((SIM.dbt&&!SIM.dbt.done)||(SIM.pend||[]).some(p=>p&&p.deb)){SIM.msg=x('Terminez d’abord le débat en cours.','Finish the debate in progress first.');return render()}SIM.msg='';st.atkOpen=false;const before=RD.map(d=>d.win),s0=provShares()[SIM.me],dec=v=>v*.97;
  aiCampaignDay();aiCampShocks();platformDrift();
  SIM.nat=SIM.nat.map(dec);SIM.reg=SIM.reg.map(r=>r.map(dec));RD.forEach(d=>d.l=d.l.map(dec));
- if(SIM.mode==='real')for(let k=0;k<5;k++){SIM.trend[k]+=Math.log(TG[k]/SIM.t0[k])/DAYS;SIM.nat[k]+=(rnd()-.5)*.006}else{const pr=provShares(),ld=pr.indexOf(Math.max(...pr));for(let k=0;k<P.length;k++){SIM.trend[k]+=(rnd()-.5)*.05;SIM.nat[k]+=.0015+Math.max(0,pr[ld]-pr[k])*(k===SIM.me?.004:.012);if(k!==ld)SIM.nat[ld]-=ld===SIM.me?.0012:.0005}campTighten(pr);campRecord()}
+ if(SIM.mode==='real')for(let k=0;k<5;k++){SIM.trend[k]+=Math.log(TG[k]/SIM.t0[k])/DAYS;SIM.nat[k]+=(rnd()-.5)*.006}else{const pr=provShares(),ld=pr.indexOf(Math.max(...pr));for(let k=0;k<P.length;k++){SIM.trend[k]+=(rnd()-.5)*.05;SIM.nat[k]+=.0015+Math.max(0,pr[ld]-pr[k])*(k===SIM.me?.004:.012);if(k!==ld)SIM.nat[ld]-=ld===SIM.me?.0012:.0005}campTighten(pr);campRecord();campThird()}
  recalc();SIM.day++;SIM.ap=3;SIM.funds+=50;SIM.fat*=.9;SIM.an*=.95;SIM.fr=(SIM.fr||0)*.9;SIM.gt=(SIM.gt||0)*.9;SIM.atk=(SIM.atk||P.map(()=>0)).map(v=>v*.9);if(SIM.mkf)for(const k in SIM.mkf){SIM.mkf[k].tv*=.9;SIM.mkf[k].rd*=.9}SIM.tc=SIM.tc.map(v=>v*.95);P.forEach((_,k)=>{if(k===SIM.me)return;const o=ps(k);o.funds+=50;o.an*=.95;o.fr*=.9;o.tc=o.tc.map(v=>v*.95)});if(SIM.aiMkf)for(const k in SIM.aiMkf)for(const m in SIM.aiMkf[k]){SIM.aiMkf[k][m].tv*=.9;SIM.aiMkf[k][m].rd*=.9}sched(SIM.day);SIM.pend=SIM.pend.filter(p=>{if(SIM.day-p.t>2){if(p.deb)SIM.nat[SIM.me]-=.012;SIM.log.push(x(p.f,p.e)+(p.deb?x(' (chaise vide)',' (empty chair)'):x(' (ignoré)',' (ignored)')));return false}return true});
  const fl=RD.filter((d,i)=>d.win!==before[i]);
  SIM.last={rv:(SIM.rvLog||[]).slice(),acts:SIM.log,d:provShares()[SIM.me]-s0,flips:fl.slice(0,4).map(d=>d.nm+' → '+P[d.win].n),nf:fl.length};SIM.log=[];SIM.hist.push(provShares());addDailyPolls(SIM.day);
@@ -2911,6 +2917,21 @@ function plPrioritise(pi){const G=SIM.gov,p=G&&G.prom[pi];if(!p||G.role!=='gov'|
  if(!c.length){G.log.unshift(x('Aucun nouveau projet de loi à mettre à l’ordre du jour pour cet engagement (il y en a peut-être déjà un à l’ordre du jour).','No new bill to put on the agenda for this pledge (one may already be on the agenda).'));return}
  G.cap--;p.prio=true;G.offer.push(c[(rnd()*c.length)|0]);G.log.unshift(x('Priorité du gouvernement : ','Government priority: ')+promLabel(p))}
 function plRenounce(pi){const G=SIM.gov,p=G&&G.prom[pi];if(!p||G.role!=='gov'||p.s==='kept'||p.s==='broken')return;if(G.plAsk!==pi){G.plAsk=pi;return}G.plAsk=null;pledgeBroken(G,p,'renounce')}
+/* An AI government actually governs: it works through its pledges (most get kept, about one in four is neglected), and when its approval sinks it tries a reset (shuffle, relief package or a fresh-start speech); in the last year it rolls out pre-election announcements. Approval also has a partisan floor around 28: even unpopular governments keep their base. Everything it does is logged with 🏛️. */
+function aiGovTick(G){if(!G||G.fell||G.role!=='opp')return;const gn=P[G.gv].n;
+ (G.prom||[]).forEach(p=>{if(p.s==='kept'||p.s==='broken')return;if(p.ai==null)p.ai=rnd()<.75?1:.3;p.p=(p.p||0)+(6+rnd()*10)*p.ai;if(p.p>=100){const cap=G.cap;pledgeKept(G,p);G.cap=cap;G.log[0]='🏛️ '+gn+x(' — ',' — ')+G.log[0]}});
+ if(G.appr<38&&G.q-(G.rsq??-9)>=4&&rnd()<.55){G.rsq=G.q;const r=(rnd()*3)|0,T=[['remanie son cabinet pour relancer son gouvernement.','shuffles its cabinet to reset its government.',()=>{G.coh=cl(G.coh+6);G.appr=cl(G.appr+3)}],['annonce un plan d’allègement pour les familles.','announces a relief package for families.',()=>{G.appr=cl(G.appr+4);G.debt+=.6}],['prononce un discours de relance et reconnaît ses erreurs.','gives a fresh-start speech and owns its mistakes.',()=>{G.appr=cl(G.appr+2.5);G.ev+=2}]][r];T[2]();G.log.unshift('🏛️ '+gn+' '+x(T[0],T[1]))}
+ if(G.q>=12&&G.q<16&&rnd()<.6){G.appr=cl(G.appr+1.5);G.log.unshift('🏛️ '+gn+x(' multiplie les annonces avant les élections.',' rolls out pre-election announcements.'))}
+ if(G.appr<28)G.appr=cl(G.appr+(28-G.appr)*.35)}
+/* Quarterly poll news: every quarter the log reports the national numbers and, when the government moves 1.2+ points, the main reasons, so no big swing goes unexplained. */
+function pollNews(G){const pt=G.pt||[];if(pt.length<1)return;const a=pt[pt.length-1],b=pt.length>1?pt[pt.length-2]:(G.pb||a),gv=G.gv,f=v=>(v*100).toFixed(1).replace('.',lang==='fr'?',':'.'),d=v=>(v>=0?'+':'−')+Math.abs(v*100).toFixed(1).replace('.',lang==='fr'?',':'.');
+ let t='📊 '+x('Sondages du trimestre : ','Quarterly polls: ')+P.map((pp,k)=>pp.n+' '+f(a[k])+' ('+d(a[k]-b[k])+')').join(' · ');const dg=a[gv]-b[gv];
+ if(Math.abs(dg)>=.012){const why=[],up=dg>0,cr=crPress(G),pr=promPress(G),bm=G.bmood||0,ia=Object.values(G.ind).reduce((s,v)=>s+v,0)/Object.keys(G.ind).length,ap=G.appr-(G.hist&&G.hist.length>1?G.hist[G.hist.length-2]:G.appr);
+  if(!up){if(cr<-3)why.push(x('crises non réglées','unresolved crises'));if(pr<-3)why.push(x('engagements rompus ou en retard','broken or overdue pledges'));if(bm<-2)why.push(x('budget mal reçu','an unpopular budget'));if(ia<45)why.push(x('services et économie en recul','slipping services and economy'));if(G.coh<45)why.push(x('divisions au caucus','caucus divisions'));if(ap<-3)why.push(x('chute de l’approbation','falling approval'))}
+  else{if(cr>-1)why.push(x('crises maîtrisées','crises under control'));if(pr>1)why.push(x('engagements tenus','pledges delivered'));if(ia>55)why.push(x('services et économie solides','strong services and economy'));if(ap>3)why.push(x('approbation en hausse','rising approval'))}
+  t+=' — '+gn2(gv)+' '+d(dg)+(why.length?x(' : ',': ')+why.slice(0,3).join(', '):'')+'.'}
+ G.log.unshift(t)}
+const gn2=k=>P[k].n;
 function plDeadlines(G){if(!G||!G.prom)return;G.prom.forEach(p=>{if(p.s==='kept'||p.s==='broken'||p.dl==null)return;
  if(G.q>=p.dl){if(p.p>=50){p.part=true;pledgeKept(G,p)}else pledgeBroken(G,p,'deadline')}
  else if(G.q===p.dl-2&&!p.warn){p.warn=1;G.log.unshift(x('Échéance dans deux trimestres : ','Deadline in two quarters: ')+promLabel(p))}})}
@@ -3183,7 +3204,7 @@ function crSpawn(G){const B=G.bc,has=id=>G.cr.some(c=>c.id===id);
  let r=rnd()*t,i=0;while(i<C.length-1&&(r-=w[i])>0)i++;crOpen(G,C[i].id,first?2:1)}
 /* AI government's crisis response (opposition role): each quarter it may send its minister, fund the ministry and table a response bill, which goes to a real vote (G.vq).
    Its odds rise with severity and with the pressure the opposition applies (c.prs, halves every quarter); ignoring a pressured crisis costs it approval. Each step is logged on the card (c.gr). */
-function crAIOdds(G,c){return Math.min(.95,.12+.08*c.sev+.2*(c.prs||0)+(G.appr<40?.08:0))}
+function crAIOdds(G,c){return Math.min(.95,.3+.09*c.sev+.2*(c.prs||0)+(G.appr<40?.08:0))}
 function crAI(G,c){const C=crDef(c.id),a=crAIOdds(G,c),M=crMf(c,C),sl=c.sl??C.sl,gr=c.gr=c.gr||[],add=(t,v)=>{gr.unshift({q:G.q,t,v});if(gr.length>6)gr.pop();G.log.unshift('🏛️ '+crNm(c)+x(' : ',': ')+x(t[0],t[1]))};let g=0,did=0;
  if(rnd()<a){did=1;const r=rnd(),v=r<.6?25:r<.85?12:-8;g+=v;if(v>0)crFx(G,c.id,{imb:c.id==='heat'?-.012*v:0,cush:c.id==='slow'?.006*v:0,v:c.id==='rec'?.02*v:0});
   add([M[0]+' ('+CM[sl][0]+')'+(v>12?' : réussi.':v>0?' : résultats mitigés.':' : bourde.'),M[1]+' ('+CM[sl][1]+')'+(v>12?': it works.':v>0?': mixed results.':': a fumble.')],v)}
