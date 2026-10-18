@@ -517,7 +517,7 @@ svg[viewBox="12 6 792 618"]{width:100%;max-height:min(38vh,400px)}
 </style>
 </head><body>
 <header>
- <div class="brand">Canada</div>
+ <div class="brand">Canada · House of Commons</div>
  <div class="stat"><span id="h-date"></span><b id="h-day"></b></div>
  <div class="stat"><span id="h-fundsl"></span><b id="h-funds"></b></div>
  <div class="stat"><span id="h-appl"></span><b id="h-share"></b></div>
@@ -1865,7 +1865,7 @@ const AIUP=[['connaît un bon coup médiatique','has a strong media moment'],['a
 function aiPollDrift(G){const w=G.aiw||(G.aiw=[0,0,0,0,0]),v=G.aiv||(G.aiv=[0,0,0,0,0]),me=SIM.me,gv=G.gv,b=G.pb||provShares(),cand=[0,1,2,3,4].filter(k=>k!==gv&&k!==me);
  const lead=cand.slice().sort((a,c)=>(b[c]+w[c]*.2)-(b[a]+w[a]*.2))[0],unrest=Math.max(0,45-G.appr)/100;
  for(const k of [0,1,2,3,4]){if(k===gv||k===me)continue;
-  let sh=(rnd()+rnd()+rnd()-1.5)*.075;if(k===lead)sh+=unrest*.2-Math.max(0,G.appr-55)/100*.08;
+  let sh=(rnd()+rnd()+rnd()-1.5)*.075;if(k===lead)sh+=unrest*.2+.01;
   if(rnd()<.14){const up=rnd()<(k===lead?.4:.5),m=.08+rnd()*.10,tx=(up?AIUP:AIDN)[(rnd()*4)|0];sh+=up?m:-m;G.log.unshift(P[k].n+' '+x(tx[0],tx[1])+'.')}
   /* damped momentum and a firm pull back to the election baseline, so a run of news shocks fades instead of compounding into a collapse */
   v[k]=.35*v[k]+sh-.2*w[k];w[k]=Math.max(-.4,Math.min(.4,w[k]+v[k]))}}
@@ -1892,9 +1892,9 @@ function govTruth(G){const b=G.pb||(G.pb=provShares().slice()),gv=G.gv,me=SIM.me
  const ten=(SIM.tenure&&SIM.tenure.p===gv)?SIM.tenure.n:0;
  let D=GOV_SWING*Math.tanh((G.appr-45)/22)+(G.coh-60)*.0006-GOV_COST-Math.min(G.q,16)*GOV_FATIGUE-ten*TERM_FATIGUE+(me===gv?rw*.25:0);
  let tg=s[gv]+D;if(tg>GOV_CEIL)tg=GOV_CEIL+(tg-GOV_CEIL)*.45;tg=Math.max(Math.min(s[gv],b[gv])*.65,Math.min(.52,tg));D=tg-s[gv];
- /* 3. Voter flows: the swing moves between the government and each party by VFLOW, and no party loses more than 40 % of its share to the government. When the government slips, its main rival picks up an extra anti-incumbent share. */
+ /* 3. Voter flows: the swing moves between the government and each party by VFLOW, and no party loses more than 35 % of its share to the government (15 % for the official opposition, whose base is the stickiest). When the government slips, its main rival picks up an extra anti-incumbent share. */
  const oth=[0,1,2,3,4].filter(k=>k!==gv);
- if(D>0){let left=D;for(let pass=0;pass<3&&left>1e-6;pass++){const cap=oth.map(k=>Math.max(0,s[k]-b[k]*.6)),wt=oth.map((k,i)=>cap[i]>0?s[k]*VFLOW[k][gv]:0),W=wt.reduce((a,c)=>a+c,0);if(W<=0)break;let used=0;oth.forEach((k,i)=>{const take=Math.min(cap[i],left*wt[i]/W);s[k]-=take;used+=take});left-=used}s[gv]+=D-left}
+ if(D>0){let left=D;for(let pass=0;pass<3&&left>1e-6;pass++){const opp0=oth.slice().sort((a,c)=>b[c]-b[a])[0],cap=oth.map(k=>Math.max(0,s[k]-b[k]*(k===opp0?.85:.65))),wt=oth.map((k,i)=>cap[i]>0?s[k]*VFLOW[k][gv]:0),W=wt.reduce((a,c)=>a+c,0);if(W<=0)break;let used=0;oth.forEach((k,i)=>{const take=Math.min(cap[i],left*wt[i]/W);s[k]-=take;used+=take});left-=used}s[gv]+=D-left}
  else if(D<0){const lead=oth.slice().sort((a,c)=>s[c]-s[a])[0],wt=oth.map(k=>Math.sqrt(s[k])*VFLOW[gv][k]*(k===lead?1.4:1)),W=wt.reduce((a,c)=>a+c,0);oth.forEach((k,i)=>s[k]+=-D*wt[i]/W);s[gv]+=D}
  /* 4. The same soft ceiling for every other party (a collapsing government can't hand its rival a 50 % landslide either); the excess flows to the others by VFLOW. */
  for(let k=0;k<5;k++)if(k!==gv&&s[k]>GOV_CEIL){const ex=(s[k]-GOV_CEIL)*.55,o=[0,1,2,3,4].filter(j=>j!==k),wt=o.map(j=>s[j]*(VFLOW[k][j]+.05)),W=wt.reduce((a,c)=>a+c,0);s[k]-=ex;o.forEach((j,i)=>s[j]+=ex*wt[i]/W)}
@@ -2209,7 +2209,7 @@ function snapCore(kind){const c=seats(RD.length),gv0=c.indexOf(Math.max(...c)),G
  RD.forEach(d=>{const e=kind==='term'?d.s.map((v,k)=>Math.pow(v,.7)*Math.pow(d.b0[k],.3)):d.s.slice(),T=e.reduce((a,b)=>a+b);d.b=e.map(v=>v/T)});
  ROUND++;SIM.mode='open';newGame(undefined,true);DAYS=kind==='term'?39:33;
  if(!G)SIM.trend[gv]+=-(kind==='term'?.03:.06);
- if(G){G.regfx.forEach((v,g)=>{SIM.reg[g][gv]+=Math.max(-.12,Math.min(.12,v*.025))});if(G.rfx)RD.forEach(d=>{const v=G.rfx[d.id];if(v)d.l[SIM.me]+=Math.max(-.15,Math.min(.15,v*.03))});if(G.pfx)RD.forEach(d=>{const v=pfxSum(G,d.id);if(v)d.l[gv]+=Math.max(-.15,Math.min(.15,v*.03))});if(G.rvt&&G.rvt.length)rvResolve(G);if(G.rvx)RD.forEach(d=>{const a=G.rvx[d.id];if(a)a.forEach((v,k)=>{if(v)d.l[k]+=Math.max(-.15,Math.min(.15,v*.03))})});SIM.legacy={g:sc.g,s:Math.round(sc.tot),p:gv}}
+ if(G){G.regfx.forEach((v,g)=>{SIM.reg[g][gv]+=Math.max(-.12,Math.min(.12,v*.025))});if(G.rfx)RD.forEach(d=>{const v=G.rfx[d.id];if(v)d.l[SIM.me]+=Math.max(-.15,Math.min(.15,v*.03))});if(G.pfx)RD.forEach(d=>{const v=pfxSum(G,d.id);if(v)d.l[gv]+=Math.max(-.15,Math.min(.15,v*.03))});if(G.rvt&&G.rvt.length)rvResolve(G);if(G.rvx)RD.forEach(d=>{const a=G.rvx[d.id];if(a)a.forEach((v,k)=>{if(v)d.l[k]+=Math.max(-.15,Math.min(.15,v*.03))})});SIM.legacy={g:sc.g,s:Math.round(sc.tot),p:gv};SIM.rec={gv,cn:{...(G.cn||CN0)},ind:{...G.ind},key:(SIM.seed0||0)+'_'+ROUND,last:-1}}
  recalc();
  if(liveEnd){/* campaign opens where the last governance poll left off: approval, cohesion, profile and riding work are already priced into it */
   for(let it=0;it<8;it++){const ps=provShares();SIM.trend=SIM.trend.map((t,k)=>t+Math.log(Math.max(.003,liveEnd[k])/Math.max(.003,ps[k])));recalc()}
@@ -2540,10 +2540,18 @@ function aiCampShocks(){if(!SIM.rvLog)SIM.rvLog=[];const pr=provShares(),ld=pr.i
  P.forEach((_,k)=>{if(k!==SIM.me){cv[k]=.85*cv[k]+(rnd()+rnd()-1)*.014;SIM.nat[k]+=cv[k]}});
  P.forEach((_,k)=>{if(k===SIM.me||rnd()>(late?.24:.16))return;const up=rnd()<Math.max(.25,Math.min(.65,.5-(pr[k]-.2)*1.2+(k===ld?-.05:0))),m=(.03+rnd()*.07)*(late?1.3:1),tx=(up?AIUP:AIDN)[(rnd()*4)|0];
   SIM.nat[k]+=up?m:-m;SIM.rvLog.push({k,a:99,t:tx})})}
+/* Campaigns tighten: a big lead brings scrutiny on the front-runner, and anti-front-runner voters consolidate behind the runner-up (largely at third parties' expense). Applies to any leader, player or AI, and grows with the size of the lead above 5 points. */
+function campTighten(pr){const o=pr.map((v,k)=>[v,k]).sort((a,c)=>c[0]-a[0]),ld=o[0][1],ru=o[1][1],L=o[0][0]-o[1][0]-.05;if(L<=0)return;
+ SIM.nat[ru]+=L*.07;SIM.nat[ld]-=L*.025;for(const [,k] of o.slice(2))SIM.nat[k]-=L*.012}
+/* The government's record on the issue of the day: a strong record on a top concern helps it, a weak one hurts it and lifts the party that owns the issue. Bounded (roughly ±3 pts over a campaign once tightening is counted) so good governing pays without guaranteeing a landslide. */
+function campRecord(){if(!recOK())return;const R0=SIM.rec,t=salTheme(),k=Object.keys(CNTH).find(c=>CNTH[c]===t);if(!k||R0.ind[k]==null)return;
+ const v=Math.max(-1,Math.min(1,(R0.ind[k]-50)/35)),wt=Math.max(.6,Math.min(1.6,(R0.cn[k]||1)/1.1)),gv=R0.gv;SIM.nat[gv]+=.011*v*wt;
+ if(v<0){let o=-1;try{o=ownTop(t)}catch(e){}if(o<0||o===gv)o=provShares().map((s,j)=>[s,j]).filter(a=>a[1]!==gv).sort((a,c)=>c[0]-a[0])[0][1];SIM.nat[o]+=-.005*v*wt}
+ if(R0.last!==t){R0.last=t;const sc=Math.round(R0.ind[k]),lab=CNL[k];(SIM.rvLog=SIM.rvLog||[]).push({k:gv,a:99,t:v>=0?['défend son bilan en '+lab[0].toLowerCase()+', l’enjeu du jour ('+sc+'/100).','defends its record on '+lab[1].toLowerCase()+', the issue of the day ('+sc+'/100).']:['voit son bilan en '+lab[0].toLowerCase()+' écorché, l’enjeu du jour ('+sc+'/100).','takes heat for its record on '+lab[1].toLowerCase()+', the issue of the day ('+sc+'/100).']})}}
 function nextDayCore(){if(SIM.day>DAYS)return;if((SIM.dbt&&!SIM.dbt.done)||(SIM.pend||[]).some(p=>p&&p.deb)){SIM.msg=x('Terminez d’abord le débat en cours.','Finish the debate in progress first.');return render()}SIM.msg='';st.atkOpen=false;const before=RD.map(d=>d.win),s0=provShares()[SIM.me],dec=v=>v*.97;
  aiCampaignDay();aiCampShocks();platformDrift();
  SIM.nat=SIM.nat.map(dec);SIM.reg=SIM.reg.map(r=>r.map(dec));RD.forEach(d=>d.l=d.l.map(dec));
- if(SIM.mode==='real')for(let k=0;k<5;k++){SIM.trend[k]+=Math.log(TG[k]/SIM.t0[k])/DAYS;SIM.nat[k]+=(rnd()-.5)*.006}else{const pr=provShares(),ld=pr.indexOf(Math.max(...pr));for(let k=0;k<P.length;k++){SIM.trend[k]+=(rnd()-.5)*.05;SIM.nat[k]+=.0015+Math.max(0,pr[ld]-pr[k])*.012;if(k!==ld)SIM.nat[ld]-=.0008}}
+ if(SIM.mode==='real')for(let k=0;k<5;k++){SIM.trend[k]+=Math.log(TG[k]/SIM.t0[k])/DAYS;SIM.nat[k]+=(rnd()-.5)*.006}else{const pr=provShares(),ld=pr.indexOf(Math.max(...pr));for(let k=0;k<P.length;k++){SIM.trend[k]+=(rnd()-.5)*.05;SIM.nat[k]+=.0015+Math.max(0,pr[ld]-pr[k])*.012;if(k!==ld)SIM.nat[ld]-=.0008}campTighten(pr);campRecord()}
  recalc();SIM.day++;SIM.ap=3;SIM.funds+=50;SIM.fat*=.9;SIM.an*=.95;SIM.fr=(SIM.fr||0)*.9;SIM.gt=(SIM.gt||0)*.9;SIM.atk=(SIM.atk||P.map(()=>0)).map(v=>v*.9);if(SIM.mkf)for(const k in SIM.mkf){SIM.mkf[k].tv*=.9;SIM.mkf[k].rd*=.9}SIM.tc=SIM.tc.map(v=>v*.95);P.forEach((_,k)=>{if(k===SIM.me)return;const o=ps(k);o.funds+=50;o.an*=.95;o.fr*=.9;o.tc=o.tc.map(v=>v*.95)});if(SIM.aiMkf)for(const k in SIM.aiMkf)for(const m in SIM.aiMkf[k]){SIM.aiMkf[k][m].tv*=.9;SIM.aiMkf[k][m].rd*=.9}sched(SIM.day);SIM.pend=SIM.pend.filter(p=>{if(SIM.day-p.t>2){if(p.deb)SIM.nat[SIM.me]-=.012;SIM.log.push(x(p.f,p.e)+(p.deb?x(' (chaise vide)',' (empty chair)'):x(' (ignoré)',' (ignored)')));return false}return true});
  const fl=RD.filter((d,i)=>d.win!==before[i]);
  SIM.last={rv:(SIM.rvLog||[]).slice(),acts:SIM.log,d:provShares()[SIM.me]-s0,flips:fl.slice(0,4).map(d=>d.nm+' → '+P[d.win].n),nf:fl.length};SIM.log=[];SIM.hist.push(provShares());addDailyPolls(SIM.day);
@@ -2762,7 +2770,11 @@ const plUsed=()=>st.plat.reduce((a,v)=>a+Math.abs(v),0);
 const brandOf=k=>AI_PLAT[k]||[0,0,0,0,0,0,0,0,0,0];
 function plankCred(i){const b=brandOf(SIM.me)[i],s=st.plat[i];let f=1-.17*Math.max(0,Math.abs(s-b)-1);if(s!==0&&PL().brk.includes(i))f*=.8;return Math.max(.35,Math.min(1,f))}
 const credMult=()=>.6+PL().cred/100*.8;
-function salTheme(day){const blk=Math.floor(((day||SIM.day||1)-1)/4),h=Math.abs(Math.sin((SIM.seed0||7)*12.9898+blk*78.233)*43758.5453)%1;return 1+Math.min(8,Math.floor(h*9))}
+/* The campaign agenda rotates every 4 days. After a term, what voters cared about (G.cn, carried in SIM.rec) weights the draw, so the issues that defined the term tend to define the campaign. */
+const CNTH={econ:4,hous:7,health:1,safe:6,clim:9,edu:8};
+const recOK=()=>SIM.rec&&SIM.rec.key===(SIM.seed0||0)+'_'+ROUND;
+function salTheme(day){const blk=Math.floor(((day||SIM.day||1)-1)/4),h=Math.abs(Math.sin((SIM.seed0||7)*12.9898+blk*78.233)*43758.5453)%1;if(!recOK())return 1+Math.min(8,Math.floor(h*9));
+ const w=[0,1,1,1,1,1,1,1,1,1];for(const k in CNTH)w[CNTH[k]]+=(SIM.rec.cn[k]||0)*3;let r=h*w.reduce((a,b)=>a+b,0);for(let i=1;i<10;i++){r-=w[i];if(r<0)return i}return 9}
 function platEff(k){const sl=salTheme();if(k!==SIM.me)return effectsFor(platFor(k).map((v,i)=>v*(sl===i?1.5:1)));const m=credMult();return effectsFor(st.plat.map((v,i)=>v*plankCred(i)*(sl===i?1.5:1)*m))}
 function plankEff(k,i){const sl=salTheme(),a=[0,0,0,0,0,0,0,0,0,0];a[i]=st.plat[i]*plankCred(i)*(sl===i?1.5:1)*credMult()*2.5;return effectsFor(a)}
 const plankNat=(k,i)=>.006*Math.abs(st.plat[i])/2*plankCred(i)*credMult()*(salTheme()===i?1.5:1);
