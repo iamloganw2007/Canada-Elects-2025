@@ -228,7 +228,10 @@ input[type=range]{width:100%;accent-color:var(--fleur)}
 
 .vote-bill-backdrop{position:fixed;inset:0;z-index:99999;background:rgba(4,14,30,.64);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:22px;box-sizing:border-box}.vote-bill-modal{position:relative;width:min(760px,96vw);max-height:92vh;overflow:auto;background:#fff;color:#182235;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 24px 90px rgba(0,0,0,.42);padding:30px 34px 34px;box-sizing:border-box}.vote-bill-close{position:sticky;top:0;float:right;z-index:2;width:38px;height:38px;border:0;border-radius:50%;background:#eef3f9;color:#284a82;font-size:28px;line-height:1;cursor:pointer}.vote-bill-paper{font-family:Georgia,'Times New Roman',serif;color:#17233a}.vote-bill-masthead{text-align:center;color:#3155a4;font-size:clamp(24px,4vw,36px);font-weight:800;line-height:1.05;border-top:4px double #3155a4;border-bottom:4px double #3155a4;padding:12px 4px;margin:12px auto 22px;max-width:520px}.vote-bill-paper h2{text-align:center;color:#17233a;font-size:clamp(23px,3vw,32px);margin:14px 0}.vote-bill-subtitle{text-align:center;color:#64748b;margin:0 0 22px;font-size:13px}.vote-bill-paper .card{box-shadow:none}.vote-bill-preview{color:var(--ink);border:1px solid var(--line)}body:has(.vote-bill-backdrop){overflow:hidden}@media(max-width:600px){.vote-bill-backdrop{padding:8px}.vote-bill-modal{width:100%;max-height:96vh;padding:22px 16px}.vote-bill-masthead{margin-top:18px}}
 .db-backdrop{z-index:99990}.db-modal{width:min(720px,96vw);padding:26px 30px 30px}.db-modal .card{box-shadow:none;border:0;padding:0;margin:0;background:transparent}.db-modal h2{margin:2px 0 10px}
-.bill-paper-pledge-status{text-align:center;margin:8px auto 0}.bill-paper-pledge-status .chip{display:inline-flex;align-items:center;gap:5px}
+.bill-paper-pledge-status{text-align:center;margin:8px auto 0}
+.cr-tag{display:inline-block;font:600 12px/1.35 system-ui,-apple-system,sans-serif;color:#b42318;background:#fdecea;border:1px solid #f4c7c2;border-radius:999px;padding:2px 9px;margin:2px 4px 2px 0;white-space:normal;max-width:100%;vertical-align:middle}.cr-tag.bad{color:#7a1f12;background:#fbe3dc}
+.bill-paper-pledge-status{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 6px;max-width:100%;font:600 13px/1.35 system-ui,-apple-system,sans-serif}.bill-paper-pledge-status b,.bill-paper-pledge-status .sp-tag{font-size:13px;white-space:normal}
+.bill-builder-document,.bill-paper{position:relative;z-index:31}.bill-paper-pledge-status .chip{display:inline-flex;align-items:center;gap:5px}
 /* Map tab: campaign actions sit beside the map so nothing needs scrolling */
 main:has(.mapgrid){max-width:1720px}
 .grid.mapgrid{grid-template-columns:minmax(0,1fr) 316px 320px;grid-template-rows:auto 1fr;grid-template-areas:"map act top" "map bot bot";align-items:start}
@@ -627,7 +630,7 @@ function mapSVG(layer,rev,selId,vb,ins,raw){const sk=st.sp??SIM.me,sv=RD.map(d=>
  return `<svg class="mainmap" viewBox="${vb}" style="width:100%;max-height:max(58vh,380px);display:block;--ar:${(vn[2]/vn[3]).toFixed(4)}" role="group" aria-label="${x('Carte des circonscriptions','Riding map')}">`+it.sort((p,q)=>p[0]-q[0]).map(p=>p[1]).join('')+outl+((layer==='pj'||layer==='rw')?pjOverlay(vn,layer):'')+byOverlay(vn)+(layer!=='min'?crOverlay(vn):'')+(layer==='min'?pjOverlay(vn,'min')+crOverlay(vn)+minOverlay(vn):'')+(layer==='rw'?rprOverlay(vn)+rvOverlay(vn):'')+`<g class="maplabs" pointer-events="none"></g></svg>`}
 function mapInsets(selId){/* each inset re-shows the main map's own riding paths (same fill, same selection) through one of the zoom regions */
  return `<div class="map-insets">`+Array.from({length:VBS.length-1},(_,j)=>j+1).map(i=>{const v=VBS[i],nme=x(v[0],v[1]);return `<figure class="inset" data-i="${i}"><figcaption><b>${i}</b>${nme}</figcaption><svg class="inset-svg" viewBox="${INSV[i]}" role="group" aria-label="${nme}">`+RD.slice().sort((p,q)=>(p.id===selId)-(q.id===selId)).map(d=>`<use href="#rd${d.id}" data-r="${d.id}" style="cursor:pointer"><title>${d.nm}</title></use>`).join('')+`</svg></figure>`}).join('')+`</div>`}
-function mapBoxHTML(layer){const on=st.insets!==false&&!st.vbi;/* insets only accompany the whole-province view; a zoomed view fills the card at full size */return `<div id="mapbox"${on?' class="hasins"':''}>${mapSVG(layer,RD.length,st.sel,VBS[st.vbi][2],on&&(!st.pjPick?true:'plain'))}${on?mapInsets(st.sel):''}</div>`}
+function mapBoxHTML(layer){const on=st.insets!==false&&!st.vbi;/* insets only accompany the whole-province view; a zoomed view fills the card at full size */return `<div id="mapbox"${on?' class="hasins"':''}>${mapSVG(layer,RD.length,st.sel,VBS[st.vbi][2],on&&true)}${on?mapInsets(st.sel):''}</div>`}
 function provShares(rev=RD.length){const t=P.map(()=>0);RD.forEach((d,i)=>{if(i<rev)d.s.forEach((v,k)=>t[k]+=v*d.w)});const T=t.reduce((a,b)=>a+b)||1;return t.map(v=>v/T)}
 function bars(v,mx){return P.map((p,i)=>`<div class="bar"><span class="n">${p.n}</span><span class="t"><i style="width:${v[i]/mx*100}%;background:${p.c}"></i></span><span class="v">${pct(v[i])}</span></div>`).join('')}
 function poll(o){o=o||{};
@@ -1043,7 +1046,7 @@ function budHTML(){const F=gfin(),gov=SIM.gov,debt=gov?gov.debt:41.2,ta=taxAmoun
  return `<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center"><div class="big" style="color:var(${F.bal>=0?'--ok':'--bad'})">${F.bal>=0?'+':''}${fn(F.bal)} G$ <span class="note">${F.bal>=0?x('excédent','surplus'):x('déficit','deficit')}</span>${(()=>{const r=Math.abs(F.bal)/gdpOf(SIM.gov)*100,c=F.bal>=0||r<3?'var(--ok)':r>4?'var(--bad)':'var(--mute)';return ` <span class="note" style="color:${c};font-weight:700">· ${r.toFixed(1).replace('.',lang==='fr'?',':'.')} % ${F.bal>=0?x('ratio excédent/PIB','surplus-to-GDP ratio'):x('ratio déficit/PIB','deficit-to-GDP ratio')}</span>`})()}</div><button class="chip" data-budpie>${st.budPie?x('Masquer le graphique','Hide chart'):x('Afficher le graphique','Show chart')}</button></div>${chart}<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin:8px 0">${leg(rev,x('Recettes','Revenue'),F.rev)}${leg(exp,x('Dépenses','Spending'),F.sp)}</div><div class="kpis" style="margin:6px 0"><div class="kpi"><small>${x('Dette / PIB actuel','Current debt / GDP')}</small><b>${fn(debt)} %</b><small>${x('Cote','Rating')} ${gov?RATS[gov.rat]:'AAA'}</small></div></div>${st.budPie?`<div class="note">${x('La part hachurée des recettes est ce que le gouvernement emprunte pour couvrir ses dépenses. Survolez une part pour son montant. Le service de la dette suit automatiquement la dette.','The hatched slice of revenue is what the government borrows to cover its spending. Hover a slice for its amount. Debt service follows debt automatically.')}</div>`:''}`}
 
 /* ---- Cabinet : compétences, spécialités, risque de scandale ---- */
-const CM=[['Santé','Health'],['Finances et Revenu national','Finance and National Revenue'],['Défense nationale','National Defence'],['Affaires étrangères','Foreign Affairs'],['Emploi et Familles','Jobs and Families'],['Industrie','Industry'],['Transports et Infrastructure','Transport and Infrastructure'],['Relations Couronne-Autochtones','Crown-Indigenous Relations']];
+const CM=[['Santé','Health'],['Finances et Revenu national','Finance and National Revenue'],['Défense nationale','National Defence'],['Affaires étrangères','Foreign Affairs'],['Immigration, Emploi et Familles','Immigration, Jobs and Families'],['Industrie','Industry'],['Logement, Infrastructure et Transports','Housing, Infrastructure and Transport'],['Relations Couronne-Autochtones','Crown-Indigenous Relations']];
 const MP=[['A. MacDonald',0,4,0,.02],['J. Chen',1,3,5,.03],['M. Singh',2,5,2,.01],['R. Patel',3,3,3,.04],['E. Cardinal',4,4,1,.02],['T. Okafor',5,2,7,.05],['D. Campbell',6,4,4,.03],['P. Wilson',7,3,6,.02],['K. Nguyen',8,3,3,.03],['S. Brooks',9,2,1,.06],['N. Gray',10,4,0,.03],['L. Fraser',0,3,7,.02]];
 const CIND=['health',null,'safe',null,'edu','econ','hous','safe'];
 const eff=(mi,s)=>MP[mi][2]+(MP[mi][3]===s?1.5:0);
@@ -1359,7 +1362,7 @@ const LEG={
  offerBase(G){const list=LEG.offerBase(G);try{if(G.role==='gov')G.prom.forEach(p=>{if(!p.prio||p.s==='kept'||p.s==='broken'||p.t==='c')return;if(list.some(i=>BL[i]&&BL[i].th&&BL[i].th[0]===p.t&&BL[i].th[1]===Math.sign(p.v)))return;const c=plCands({...G,offer:list},p);if(c.length)list.push(c[(rnd()*c.length)|0])})}catch(e){}try{pjActOffer(G,list)}catch(e){console.error(e)}try{crOffer(G,list)}catch(e){console.error(e)}return list},
  offer(G){
   G.laws=G.laws||[];G.heat=G.heat||{};const opp=G.role==='opp',me=SIM.me,doms=LCORE;
-  const n0=4+Math.min(2,doms.filter(k=>G.ind[k]<38).length),cands=[],used=new Set();
+  const n0=3+Math.min(1,doms.filter(k=>G.ind[k]<38).length),cands=[],used=new Set();
   const key=b=>b.p?b.p.dom+b.p.arc+b.p.sc:b.f,take=b=>{if(!b||used.has(key(b)))return false;used.add(key(b));cands.push(b);return true};
   const party=()=>opp?(rnd()<.8?me:(rnd()*5)|0):(rnd()<.6?G.gv:(rnd()*5)|0);
   const govPl=b=>b&&b.th&&G.prom.some(p=>p.t===b.th[0]&&Math.sign(p.v)===b.th[1]&&p.s!=='kept'&&p.s!=='broken'),okp=b=>opp?(b.st[me]>0&&!govPl(b)):!promBreaks(G,b);
@@ -1370,7 +1373,7 @@ const LEG={
   doms.filter(k=>G.ind[k]<38).sort((a,b)=>G.ind[a]-G.ind[b]).slice(0,2).forEach(k=>{for(let t=0;t<5;t++){const b=LEG.gen(G,party(),{dom:k,tag:'crisis',relief:1});if(okp(b)&&LARC[b.p.arc].i*((LDOM[k].flip&&LDOM[k].flip[b.p.arc])?-1:1)>0){take(b);return}}});
   const nStatic=rnd()<.7?1:0;let guard=0;
   while(cands.length<n0-nStatic&&guard++<60){let b=null;for(let t=0;t<3;t++){b=LEG.gen(G,party());if(okp(b))break}if(okp(b))take(b)}
-  if(rnd()<.45){for(let t=0;t<3;t++){const b=LEG.gen(G,party(),{dom:rnd()<.5?'lab':'soc'});if(okp(b)&&take(b))break}}
+  if(rnd()<.25){for(let t=0;t<3;t++){const b=LEG.gen(G,party(),{dom:rnd()<.5?'lab':'soc'});if(okp(b)&&take(b))break}}
   let list=cands.map(b=>BL.push(b)-1);
   if(nStatic){const el=BL.map((b,i)=>i).filter(i=>i<BL0&&!BL[i].gone&&!G.done.includes(i)&&G.q-((G.lastBillQ||{})[i]??-99)>=2&&(opp?(BL[i].st[me]>0&&!govPl(BL[i])):!promBreaks(G,BL[i])));if(el.length)list.push(el[(rnd()*el.length)|0])}
   
@@ -2705,7 +2708,7 @@ function render(){if(st.mk!=null&&!MK[st.mk])st.mk=null;/* saves from before the
 function nZoom(vb,factor,px,py){const A=VBS[0][2].split(/\s+/).map(Number),nw=Math.max(Math.min(...INSV.slice(1).map(v=>+v.split(/\s+/)[2]))*.6,Math.min(A[2],vb[2]*factor)),k=nw/vb[2],nh=vb[3]*k;if(nw>=A[2]){st.nvb=null}else st.nvb=`${vb[0]+(vb[2]-nw)*px} ${vb[1]+(vb[3]-nh)*py} ${nw} ${nh}`;drawNight()}
 /* Inset boxes on the campaign and governance maps: decide by the click's position in map coordinates, not by which SVG element the browser hit-tests,
    so a click anywhere inside a box zooms there in every browser and on every layer. The smallest box containing the point wins (8 and 10 sit inside 13). */
-window.addEventListener('click',e=>{if(suppressMapClick||st.pjPick||st.mpk!=null||st.vbi||st.insets===false||e.button!==0)return;const t=e.target;if(!t||!t.closest)return;
+window.addEventListener('click',e=>{if(suppressMapClick||st.mpk!=null||st.vbi||st.insets===false||e.button!==0)return;const t=e.target;if(!t||!t.closest)return;
  const svg=t.closest('#mapbox svg.mainmap');if(!svg||!(t===svg||t.closest('[data-vbox]')||t.matches('[data-r]')))return;
  const ctm=svg.getScreenCTM();if(!ctm)return;const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform(ctm.inverse()),vw=+svg.getAttribute('viewBox').split(/\s+/)[2]||1e9;
  let best=0,ba=Infinity;INSV.forEach((z,i)=>{if(!i||!z)return;const [a,b,w,h]=z.split(' ').map(Number);if(w>=vw*.35)return;if(pt.x>=a&&pt.x<=a+w&&pt.y>=b&&pt.y<=b+h&&w*h<ba){best=i;ba=w*h}});
@@ -3049,7 +3052,7 @@ function crOverlay(vn){const G=SIM.gov;if(!G||G.fell||G.q>=16||st.pjPick)return'
   o+=`<rect x="${bx}" y="${by}" width="${w}" height="${h}" rx="${h/2}" fill="var(--panel)" stroke="var(--bad)" stroke-width="2" vector-effect="non-scaling-stroke"/><text x="${bx+fs*.6}" y="${by+h/2}" font-size="${fs*.8}" fill="var(--ink)" dominant-baseline="central">${lab} ${nat.join(' ')}</text>`}
  return o?`<g pointer-events="none">${o}</g>`:''}
 /* Open minister files other than crisis files, with the regions their story names (MF texts) and who is on them. */
-const MFRG={canola:[5,6,7],strike:[8,1],auto:[4],air:[3,1],water:[10,5,6],consent:[9]};
+const MFRG={rent:[3,8],asylum:[1,3],canola:[5,6,7],strike:[8,1],auto:[4],air:[3,1],water:[10,5,6],consent:[9]};
 function crFiles(G){if(!G||G.role!=='gov')return[];const mo=Object.entries(G.mo||{});return(G.mf||[]).filter(f=>!String(f.k).startsWith('cr:')).map(f=>{const F=moF(f.k);if(!F)return null;const m=mo.find(([,o])=>o&&o.t==='f'&&o.k===f.k);return{F,k:f.k,esc:f.esc,g:MFRG[f.k]||null,who:m?+m[0]:null}}).filter(Boolean)}
 /* Under the shared map: what crises and recent events are doing and where, with a shortcut to the effects layer. */
 function crMapKey(G,lay){if(!G||G.fell||G.q>=16)return'';const where=gs=>gs&&gs.length?gs.map(g=>x(R[g].f,R[g].e)).join(', '):x('tout le Canada','Canada-wide'),sg=v=>`<b style="color:${v>=0?'var(--ok)':'var(--bad)'}">${v>=0?'+':''}${fn(v)}</b>`;
@@ -3057,10 +3060,11 @@ function crMapKey(G,lay){if(!G||G.fell||G.q>=16)return'';const where=gs=>gs&&gs.
  crFiles(G).forEach(f=>L.push(`<span>📌 <b>${x(f.F.f,f.F.e)}</b> (${x(CM[f.F.sl][0],CM[f.F.sl][1])}) · ${x(f.F.df,f.F.de)} · ${where(f.g)} · ${f.who!=null?MP[f.who][0]+x(' s’en occupe',' is on it'):`<span style="color:var(--bad)">${x('aucun ministre','no minister yet')}</span>`}${f.esc?' 🔥':''}</span>`));
  if(!L.length)return'';return `<div class="note" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center"><b>${x('Crises, événements et dossiers','Crises, events and files')}</b>${L.join('')}${lay!=='bill'?`<button class="chip" data-gml="bill">${x('Voir leurs effets sur la carte →','See their effects on the map →')}</button>`:''}</div>`}
 /* Bill tag (agenda rows, vote card, bill document via promTag): marks a crisis's own response bills, and any other bill that would help or hurt an active crisis. */
-function crTag(G,b){if(!G||!b)return'';const L=(G.cr||[]).filter(c=>crDef(c.id));let o='';
- L.forEach(c=>{const C=crDef(c.id),nm=safeText(C.em+' '+crNm(c));if(b.cr===c.id)o+=' <b style="color:#c0392b;white-space:nowrap">🚨 '+x('Réponse à la crise : ','Crisis response: ')+nm+'</b>';
-  else{const s=crScore(c.id,b);if(s>=.5)o+=' <b style="color:#c0392b;white-space:nowrap">🚨 '+x('Aide face à la crise : ','Helps with crisis: ')+nm+'</b>';else if(s<=-.5)o+=' <b style="color:var(--bad);white-space:nowrap">⚠ '+x('Nuit à la crise : ','Works against crisis: ')+nm+'</b>'}});
- if(!o&&b.cr&&crDef(b.cr))o=' <b style="color:var(--mute);white-space:nowrap">🚨 '+x('Réponse à une crise terminée : ','Response to an ended crisis: ')+safeText(x(crDef(b.cr).f,crDef(b.cr).e))+'</b>';return o}
+function crRel(id,b){const C=crDef(id),d=b&&(b.p?b.p.dom:LEG.dom(b));return !!C&&(d===C.dom||(CRD[id]||[]).includes(d))}
+function crTag(G,b){if(!G||!b)return'';const L=(G.cr||[]).filter(c=>crDef(c.id));let o='';const tg=(t,bad)=>' <span class="cr-tag'+(bad?' bad':'')+'">'+t+'</span>';
+ L.forEach(c=>{const C=crDef(c.id),nm=safeText(C.em+' '+crNm(c));if(b.cr===c.id)o+=tg('🚨 '+x('Réponse à la crise : ','Crisis response: ')+nm);
+  else if(crRel(c.id,b)){const s=crScore(c.id,b);if(s>=.5)o+=tg('🚨 '+x('Aide face à la crise : ','Helps with crisis: ')+nm);else if(s<=-.5)o+=tg('⚠ '+x('Nuit à la crise : ','Works against crisis: ')+nm,1)}});
+ if(!o&&b.cr&&crDef(b.cr))o=tg('🚨 '+x('Réponse à une crise terminée : ','Response to an ended crisis: ')+safeText(x(crDef(b.cr).f,crDef(b.cr).e)));return o}
 function crTwist(G,c){const C=crDef(c.id);c.tws=c.tws||[];const T=CRTW.filter(t=>!c.tws.includes(t.id)&&t.ok(G,c,C));if(!T.length)return;const t=T[(rnd()*T.length)|0],r=t.run(G,c,C);c.tws.push(t.id);if(!r)return;
  c.twl=r;c.twq=G.q;G.log.unshift('🔀 '+crNm(c)+x(' : ',': ')+x(r[0],r[1]))}
 function crFile(k){if(typeof k!=='string'||!k.startsWith('cr:'))return undefined;const id=k.split(':')[1],C=crDef(id);if(!C)return undefined;const c=SIM.gov&&crGet(SIM.gov,id),sv=c?c.sev:1,M=crMf(c,C);
@@ -3078,7 +3082,7 @@ function crOffer(G,list){(G.cr||[]).forEach(c=>{if(!c.bi||c.bi.some(i=>!BL[i])){
 function crLawEnact(G,b){if(!b)return;if(b.iOne)G.iOne=(G.iOne||0)+b.iOne;const bi=BL.indexOf(b);
  if(b.cr&&b.fx&&!crGet(G,b.cr))crFx(G,b.cr,b.fx);
  (G.cr||[]).slice().forEach(c=>{const C=crDef(c.id),own=b.cr===c.id,s=crScore(c.id,b);let v=0;
-  if(own){v=b.cv||40;c.pass=c.pass||[];if(!c.pass.includes(bi))c.pass.push(bi)}else if(s>=.5)v=Math.round(lcl(s*6,0,30));else if(s<=-.5)v=Math.round(lcl(s*5,-15,0));
+  if(own){v=b.cv||40;c.pass=c.pass||[];if(!c.pass.includes(bi))c.pass.push(bi)}else if(!crRel(c.id,b))v=0;else if(s>=.5)v=Math.round(lcl(s*6,0,30));else if(s<=-.5)v=Math.round(lcl(s*5,-15,0));
   if(!v)return;if(v>0&&c.bon&&G.q<=c.bonq)v=Math.round(v*c.bon);
   if(C.econ)crFx(G,c.id,own&&b.fx?b.fx:crLawFx(c.id,s));c.rsp+=v;
   G.log.unshift(own?'📜 '+x('Réponse à la crise adoptée : ','Crisis response passed: ')+x(b.f,b.e)+' ('+crNm(c)+').':v>0?'📜 '+x(b.f,b.e)+x(' aide aussi face à la crise ',' also helps with the crisis ')+crNm(c)+' ('+x('maîtrise','control')+' +'+v+').':'⚠️ '+x(b.f,b.e)+x(' nuit à la réponse à la crise ',' works against the response to ')+crNm(c)+' ('+x('maîtrise','control')+' '+v+').')})}
@@ -3639,10 +3643,14 @@ const MF=[
 {sl:3,k:'detain',f:'Citoyens détenus à l’étranger',e:'Citizens detained abroad',df:'Deux Canadiens sont détenus sans accusation.',de:'Two Canadians are being held without charge.',s:{ap:2.5},d:1},
 {sl:3,k:'canola',f:'Différend commercial sur le canola',e:'Canola trade dispute',df:'Un grand acheteur bloque les exportations de canola.',de:'A major buyer blocks canola exports.',s:{ind:{econ:2},ap:1,rg:[6,.6]},d:.5},
 {sl:4,k:'daycare',f:'Pénurie de places en garderie',e:'Daycare spaces backlog',df:'Les listes d’attente s’allongent malgré l’entente à 10 $.',de:'Wait lists grow despite the $10-a-day deal.',s:{ind:{edu:2},ap:1.5},d:.5},
+{sl:4,k:'asylum',f:'Arriéré des demandes d’asile',e:'Asylum claims backlog',df:'Les demandes s’accumulent et les refuges de Montréal et Toronto débordent.',de:'Claims are piling up and shelters in Montréal and Toronto are full.',s:{ap:2,coh:1},d:1},
+{sl:4,k:'tfw',f:'Travailleurs étrangers temporaires',e:'Temporary foreign workers',df:'Employeurs et syndicats s’affrontent sur le programme de travailleurs temporaires.',de:'Employers and unions clash over the temporary foreign worker program.',s:{ind:{econ:2},ap:1},d:.5},
 {sl:4,k:'strike',f:'Grève dans les ports et le rail',e:'Port and rail strike',df:'Les marchandises s’empilent aux ports de Vancouver et Montréal.',de:'Freight is piling up at the ports of Vancouver and Montréal.',s:{ind:{econ:3},ap:1},d:1},
 {sl:5,k:'auto',f:'Fermeture d’une usine automobile',e:'Auto plant closure',df:'Un constructeur menace de fermer une usine en Ontario.',de:'An automaker threatens to close an Ontario plant.',s:{ind:{econ:2},ap:1,rg:[4,.6]},d:.5},
 {sl:5,k:'telco',f:'Prix du cellulaire',e:'Cell phone prices',df:'Les forfaits canadiens sont parmi les plus chers au monde.',de:'Canadian phone plans are among the priciest in the world.',s:{ap:2},d:0},
 {sl:6,k:'air',f:'Chaos dans les aéroports',e:'Airport chaos',df:'Vols annulés et bagages perdus à Toronto et Montréal.',de:'Cancelled flights and lost bags at Toronto and Montréal.',s:{ap:2,ind:{econ:1}},d:0},
+{sl:6,k:'rent',f:'Flambée des loyers',e:'Rent spike',df:'Les loyers moyens bondissent encore à Toronto et Vancouver.',de:'Average rents jump again in Toronto and Vancouver.',s:{ind:{hous:3},ap:1.5},d:.5},
+{sl:6,k:'encamp',f:'Campements de sans-abri',e:'Homeless encampments',df:'Les campements gagnent les parcs; les maires demandent de l’aide.',de:'Encampments are spreading in city parks and mayors are asking for help.',s:{ind:{hous:2,health:1},ap:1},d:1},
 {sl:6,k:'hdeal',f:'Entente sur le logement bloquée',e:'Stalled housing-infrastructure deal',df:'Des villes attendent l’argent fédéral pour l’eau et les égouts.',de:'Cities are waiting on federal money for water and sewers.',s:{ind:{hous:3},ap:.5},d:.5},
 {sl:7,k:'water',f:'Avis d’ébullition d’eau',e:'Drinking water advisories',df:'Des Premières Nations vivent encore sous avis d’ébullition.',de:'First Nations are still living under boil-water advisories.',s:{ind:{health:1},ap:1.5,coh:1},d:.5},
 {sl:7,k:'consent',f:'Différend sur un pipeline',e:'Pipeline consent dispute',df:'Des chefs héréditaires bloquent un chantier.',de:'Hereditary chiefs are blocking a construction site.',s:{ind:{econ:2},ap:1,ot:2},d:1}];
@@ -3699,7 +3707,7 @@ function minWhere(G,mi,o){if(!o)return null;
  if(o.t==='p'||o.t==='v'){const p=(G.proj||[])[o.j??moLead(G,mi)],c=p&&pjCore(p)[0];return c!=null?pjCen(c).slice(0,2):null}
  if(o.t==='f'){const F=moF(o.k),c=F&&F.cr&&crGet(G,F.cr),g=c&&(crRegs(c)||[])[0];if(g!=null)return crRegCen(g)}return minOtt()}
 /* "at the ministry" line: each portfolio gets its own emoji (CM slot order) */
-const MINAT=[['🏥','de la Santé','Health'],['💰','des Finances','Finance'],['🛡️','de la Défense nationale','National Defence'],['🌐','des Affaires étrangères','Foreign Affairs'],['👪','de l’Emploi et des Familles','Jobs and Families'],['🏭','de l’Industrie','Industry'],['🚆','des Transports','Transport'],['🪶','des Relations Couronne-Autochtones','Crown-Indigenous Relations']];
+const MINAT=[['🏥','de la Santé','Health'],['💰','des Finances','Finance'],['🛡️','de la Défense nationale','National Defence'],['🌐','des Affaires étrangères','Foreign Affairs'],['🛂','de l’Immigration, de l’Emploi et des Familles','Immigration, Jobs and Families'],['🏭','de l’Industrie','Industry'],['🏘️','du Logement, de l’Infrastructure et des Transports','Housing and Infrastructure'],['🪶','des Relations Couronne-Autochtones','Crown-Indigenous Relations']];
 function minTxt(G,mi,o){if(!o){const sl=+Object.keys(st.cab).find(k=>st.cab[k]===mi),M=MINAT[sl];return M?M[0]+' '+x('Au ministère '+M[1],'At the '+M[2]+' ministry'):'🏛️ '+x('Au ministère','At the ministry')}const D=o.id?PJ.find(z=>z.id===o.id):null,p=(G.proj||[])[o.j??moLead(G,mi)],F=o.k?moF(o.k):null,since=o.n?' · '+o.n+' '+x('trim.','qtr'):'';
  return o.t==='r'?'🧭 '+x('En tournée : ','Touring ')+x(R[o.g].f,R[o.g].e)+since:o.t==='b'?'🗳️ '+x('Campagne partielle : ','By-election campaign: ')+(G.by?rdOf(G.by.id).nm:'')+since
   :o.t==='p'?'⏩ '+x('Presse le chantier : ','Pushing the build: ')+(p?pjN(pjD(p)):'')+since:o.t==='v'?'👷 '+x('Visite le chantier : ','Site visit: ')+(p?pjN(pjD(p)):'')
@@ -4237,9 +4245,9 @@ function qpQText(G,q){const t=q.k,fr=lang==='fr',sp=x('Monsieur le Président, '
 /* Answers that depend on the situation: a record to point to (gov), or figures and broken pledges to quote (opposition). */
 function qpRecord(G,k){const up=G.ind[k]!=null&&G.prev&&G.prev[k]!=null&&G.ind[k]>G.prev[k]+.3,law=(G.hans||[]).some(h=>h.by===G.gv&&BL[h.bi]&&billDoms(BL[h.bi]).includes(k));return up||law}
 function qpWorse(G,k){return G.ind[k]!=null&&G.prev&&G.prev[k]!=null&&G.ind[k]<G.prev[k]-.3}
-function qpOpts(G,T){const opp=G.role==='opp',o=[0,1,2];if(!opp&&qpRecord(G,T.k))o.push(3);if(opp&&qpWorse(G,T.k))o.push(3);if(opp&&T.k!=='prom'&&G.prom.some(p=>p.s==='broken'))o.push(4);return o}
+function qpOpts(G,T){const opp=G.role==='opp',o=[0,1,2];if(opp&&qpWorse(G,T.k))o.push(3);if(opp&&T.k!=='prom'&&G.prom.some(p=>p.s==='broken'))o.push(4);return o}
 const QPX={g3:['Citer vos résultats','Point to your results','Sûr : le dossier progresse, vous avez des faits.','Safe: the file is improving and you have facts.'],o3:['Citer les chiffres','Quote the numbers','Fiable : le dossier s’est dégradé ce trimestre.','Reliable: the file got worse this quarter.'],o4:['Rappeler une promesse brisée','Tie it to a broken pledge','Risqué mais payant : le gouvernement a renié sa parole.','Risky but rewarding: the government broke its word.']};
-function qpP2(G,T,m){const opp=G.role==='opp',D=G.qp;let p=m===3?(opp?.75:.8):m===4?.6:qpP(opp,m,T.w);if(opp&&m<2&&G.ammo&&G.ammo[T.k])p+=.15;if(m!==2)p+=.06*Math.min(2,D&&D.mom||0);return Math.min(.95,p)}
+function qpP2(G,T,m){const opp=G.role==='opp',D=G.qp;let p=m===3?(opp?.75:.8):m===4?.6:qpP(opp,m,T.w);if(!opp&&m===0&&qpRecord(G,T.k))p=Math.max(p,.8);if(opp&&m<2&&G.ammo&&G.ammo[T.k])p+=.15;if(m!==2)p+=.06*Math.min(2,D&&D.mom||0);return Math.min(.95,p)}
 qpStart=function(){const G=SIM.gov;if(!G||G.fell||G.qp)return;const opp=G.role==='opp',ask=qpAskers(G);
  const lead=ask[0]!=null?ask[0]:(G.gv===0?1:0);let qs;
  if(opp){qs=qpTopics(G).map(t=>({...t,by:SIM.me}))}
@@ -4254,7 +4262,7 @@ qpChoose=function(m){const G=SIM.gov,D=qpFix(G&&G.qp,G);if(!D||D.ph!=='pick')ret
  if(opp){if(m<3){dA=m===0?(ok?-3:.5):m===1?(ok?-1.8:0):-.6;dP=m===0?(ok?1.5:-.5):m===1?(ok?1:.2):.8}else if(m===3){dA=ok?-2.2:-.3;dP=ok?1.2:0}else{dA=ok?-2.6:.4;dP=ok?1.6:-.3}
   if(m===2){G.rel[SIM.me]=cl(G.rel[SIM.me]+2);if(G.cons){G.cons--;dA-=.6;dP+=.5}}if(m<2&&G.ammo&&G.ammo[T.k]){G.ammo[T.k]--;if(ok){dA-=.8;dP+=.5}}
   dA*=sf*(dA<0?mb:1);dP*=sf*(dP>0?mb:1);G.prof+=dP}
- else{dA=m===0?(ok?1.2:-2):m===1?(ok?2:-2.5):m===2?.8:(ok?1.6:-.8);if(m===1&&!ok)G.coh=cl(G.coh-1);if(m===2&&G.ind[T.k]!=null)G.ind[T.k]=cl(G.ind[T.k]+2);dA*=sf*(dA>0?mb:1)}
+ else{const rec=qpRecord(G,T.k);dA=m===0?(ok?(rec?1.5:1.2):(rec?-1:-2)):m===1?(ok?2:-2.5):m===2?.8:(ok?1.6:-.8);if(m===1&&!ok)G.coh=cl(G.coh-1);if(m===2&&G.ind[T.k]!=null)G.ind[T.k]=cl(G.ind[T.k]+2);dA*=sf*(dA>0?mb:1)}
  const win=opp?dA<0:dA>0;if(m!==2)D.mom=win?(D.mom||0)+1:0;
  G.appr=cl(G.appr+dA);D.tot+=dA;const r={m,ok,p,dA,dP,hk:(rnd()*3)|0};
  /* in opposition, a rival opposition party gets its own question in */
@@ -4280,7 +4288,7 @@ qpHTML=function(G){if(G.fell)return'';const D=qpFix(G.qp,G);if(!D)return qpHTML0
   +`<div class="tick" style="margin:6px 0;border-left-color:${P[by].c}"><small><b style="color:${P[by].c}">${opp?x('Vous','You'):PARTY_META[by][0]}</b>${opp?'':' · '+x('porte-parole en matière de '+cr[0],cr[1]+' critic')}</small><br><i>${safeText(qpQText(G,T))}</i></div>`
   +`<div class="bar"><span class="n" style="width:150px">${opp?x('Point faible du gouvernement','Government weak spot'):x('Terrain glissant','Exposure')}</span><span class="t"><i style="width:${w}%;background:${T.w>=15?'var(--bad)':'var(--fleur)'}"></i></span><span class="v">${Math.round(T.w)}</span></div>`;
  if(D.ph==='pick'){const M=opp?QPM:QPG,ds=opp?[['Gros risque, gros gain ; mieux sur un point faible.','High risk, high reward; best on a weak spot.'],['Fiable : un dossier solide, gain modéré.','Reliable: a solid file, moderate gain.'],['Garanti : petit gain et meilleures relations avec le gouvernement.','Guaranteed: small gain and better relations with the government.']]:[['Plus sûr si le dossier va bien.','Safer when the file is in good shape.'],['Risqué : gros gain ou lourde perte, peut diviser le caucus.','Risky: big gain or heavy loss, may split the caucus.'],['Garanti : petit gain, améliore le secteur visé.','Guaranteed: small gain, lifts the targeted sector.']];
-  const lab=m=>m<3?[M[m][0],M[m][1],ds[m][0],ds[m][1]]:QPX[(opp?'o':'g')+m];
+  const lab=m=>(!opp&&m===0&&qpRecord(G,T.k))?[M[0][0],M[0][1],'Renforcé : le dossier progresse et vous avez les faits de votre côté.','Stronger now: the file is improving and you have the facts on your side.']:m<3?[M[m][0],M[m][1],ds[m][0],ds[m][1]]:QPX[(opp?'o':'g')+m];
   body+=`<p class="note" style="margin:8px 0">${opp?x('Comment poursuivez-vous ?','How do you press it?'):x('Le ministre se lève. Votre réplique ?','Your minister rises. Your reply?')}${T.sup?' '+x('(enjeux réduits)','(lower stakes)'):''}</p><div class="cards">${qpOpts(G,T).map(m=>{const L=lab(m);return `<button class="act" data-qpm="${m}" ${!opp&&m===2&&G.cap<1?'disabled':''}><b>${m>2?'★ ':''}${x(L[0],L[1])}</b><small>${x('Chances','Odds')} : ${Math.round((m===2?1:qpP2(G,T,m))*100)} %</small><small>${x(L[2],L[3])}</small></button>`}).join('')}</div>`}
  else{const won=opp?r.dA<0:r.dA>0,who=P[by].n;
   const hl=opp?(r.m===2?x('Vous tendez la main : le ton est apprécié.','You extend a hand: the tone is noticed.'):r.m===4?(r.ok?x('La promesse brisée fait mal : le ministre bafouille.','The broken pledge stings: the minister stumbles.'):x('Le ministre retourne l’accusation contre vous.','The minister turns the charge back on you.')):r.m===3?(r.ok?x('Les chiffres parlent d’eux-mêmes.','The numbers speak for themselves.'):x('Le ministre conteste vos chiffres.','The minister disputes your numbers.')):r.ok?x('L’attaque porte : le gouvernement est sur la défensive.','The attack lands: the government is on the back foot.'):x('Le ministre réplique avec aplomb ; l’attaque tombe à plat.','The minister replies with poise; the attack falls flat.'))
@@ -4373,6 +4381,15 @@ function effLinesX(o,fr,b){if(o.length||!b||b.mb)return o;
  if(Math.abs(ch)>=.05)o.push(fr?`${ch>0?'Une hausse':'Une baisse'} estimée de la cohésion du caucus de ${ch>0?'+':'−'}${f1(ch)} pt en raison ${ch>0?'de l’unité du caucus autour de la mesure':'des divisions qu’elle suscite au sein du caucus'}`:`An expected ${ch>0?'increase':'decrease'} in Caucus Cohesion of ${ch>0?'+':'−'}${f1(ch)} pts due to ${ch>0?'unity within the governing caucus on the measure':'divisions it causes within the governing caucus'}`);
  return o};
 const LEGgenE=LEG.gen;LEG.gen=function(G,party,opt){let b=LEGgenE.apply(this,arguments);for(let t=0;t<6&&b&&!b.mb&&!b.cl&&effLines0(b.ind||{},0,b).length===0;t++)b=LEGgenE.apply(this,arguments);return b};
+
+/* At most 6 bills on the quarter's agenda (logan 2026-10-18): project acts first, then one response bill per active crisis,
+   renewals and repeals, then the rest; a crisis's other response bills fill any room left. */
+const LEGofferC=LEG.offer;LEG.offer=function(G){const L=LEGofferC.apply(this,arguments),cap=6;if(L.length<=cap)return L;
+ const pr=i=>{const b=BL[i];return !b?0:(b.pjt||b.pj!=null)?3:b.cr?2:(b.rep!=null||b.ext!=null)?1:0},seen=new Set(),keep=[];
+ const order=L.map((bi,ix)=>({bi,ix,p:pr(bi)})).sort((a,b)=>b.p-a.p||a.ix-b.ix);
+ for(const o of order){if(keep.length>=cap)break;const b=BL[o.bi];if(b&&b.cr&&o.p===2){if(seen.has(b.cr))continue;seen.add(b.cr)}keep.push(o)}
+ for(const o of order){if(keep.length>=cap)break;if(!keep.includes(o))keep.push(o)}
+ return keep.sort((a,b)=>a.ix-b.ix).map(o=>o.bi)};
 
 drawStart();newGame();
 </script></body></html>
