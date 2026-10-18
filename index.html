@@ -2389,7 +2389,8 @@ const ps=k=>k===SIM.me?SIM:((SIM.ai=SIM.ai||[])[k]=SIM.ai[k]||{ap:3,funds:700,an
 const scK=k=>{const s=(SIM.t0||[.2])[k]||.2;return Math.max(.8,Math.min(1.5,Math.sqrt(.2/s)))};
 /* Balance knob: the human player's positive campaign effects are multiplied by this (rival AI parties are not). */
 /* Difficulty: pb = multiplier on the human player's positive campaign effects, ai = same for rival AI parties, cen = censure-motion hazard multiplier, sh = government-shock probability multiplier. The player gets no campaign boost on any level (pb=1); difficulty scales the rivals and government hazards. */
-const DIFFS={easy:{pb:1,ai:.85,cen:.6,sh:.7},normal:{pb:1,ai:1,cen:1,sh:1},hard:{pb:1,ai:1.15,cen:1.35,sh:1.3}};
+/* ai scales every positive campaign effect an AI party earns. Raised 2026-10-18 (Logan: the player had it too easy) so AI campaigns can keep up with a player who plays well. */
+const DIFFS={easy:{pb:1,ai:1,cen:.6,sh:.7},normal:{pb:1,ai:1.3,cen:1,sh:1},hard:{pb:1,ai:1.55,cen:1.35,sh:1.3}};
 const dfc=()=>DIFFS[SIM.diff]||DIFFS.normal;
 const gnk=(k,v)=>v>0?v*scK(k)*(k===SIM.me?dfc().pb:dfc().ai):v;
 const aiPick=k=>(k+SIM.seed0)%PLEDGES.length;
@@ -2544,8 +2545,8 @@ const anHint=d=>'';
 function recalc(noise){const finite=(v,f=0)=>Number.isFinite(v)?v:f;SIM.nat=(SIM.nat||P.map(()=>0)).map(v=>finite(v));SIM.trend=(SIM.trend||P.map(()=>0)).map(v=>finite(v));SIM.reg=(SIM.reg||R.map(()=>P.map(()=>0))).map(row=>P.map((_,k)=>finite(row?.[k])));const PA=(SIM.t0||P.map(()=>1/P.length)).map(v=>Math.max(.001,finite(v,.2)));const MOMT=P.map((_,k)=>(SIM.dbmom||[]).reduce((a,z)=>a+(z.k===k?finite(z.v)*finite(Math.max(0,1-(SIM.day-z.day)/5)):0),0));RD.forEach(d=>{d.l=P.map((_,k)=>finite(d.l?.[k]));const e=d.b.map((b,k)=>Math.max(.000001,finite(b,.2))*Math.exp(anDamp(k,d,SIM.nat[k]+SIM.trend[k]*Math.max(.3,Math.min(2,1+EL*(Math.max(.000001,finite(b,.2))/PA[k]-1)))+SIM.reg[d.g][k]+d.l[k]+MOMT[k])+(noise?(rnd()-.5)*noise:0)));const T=e.reduce((a,b)=>a+b);d.s=e.map(v=>v/T);const q=d.s.map((v,i)=>[v,i]).sort((a,b)=>b[0]-a[0]);d.win=q[0][1];d.mg=q[0][0]-q[1][0]})}
 const SC=()=>{const s=(SIM.t0||[.2])[SIM.me]||.2;return Math.max(.8,Math.min(1.5,Math.sqrt(.2/s)))};
 const gn=v=>v>0?v*SC():v;
-/* Trailing parties campaign harder: the runner-up schedules an extra event a day when 4+ points back and a second one when 8+ back (third parties don't, so the opposition vote isn't split further). */
-function aiPush(k){const pr=provShares(),ld=pr.indexOf(Math.max(...pr));if(k===ld||pr[k]<.06)return 0;const gap=pr[ld]-pr[k],ru=pr.map((v,j)=>[v,j]).filter(a=>a[1]!==ld).sort((a,c)=>c[0]-a[0])[0][1];if(k!==ru)return 0;return (gap>.04?1:0)+(gap>.08?1:0)}
+/* Trailing parties campaign harder: the AI runner-up always schedules an extra event a day, a second when 3+ points back and a third when 8+ back; an AI front-runner adds one to defend a lead of under 5 points over the player (third parties don't, so the opposition vote isn't split further). */
+function aiPush(k){const pr=provShares(),me=SIM.me,ld=pr.indexOf(Math.max(...pr));if(pr[k]<.06)return 0;if(k===ld)return me>=0&&me!==ld&&pr[ld]-pr[me]<.05?1:0;const gap=pr[ld]-pr[k],ru=pr.map((v,j)=>[v,j]).filter(a=>a[1]!==ld).sort((a,c)=>c[0]-a[0])[0][1];if(k!==ru)return 0;return 1+(gap>.03?1:0)+(gap>.08?1:0)}
 function aiCampaignDay(){
  // Rival parties act through applyAct(): the very same nine actions, AP costs, budgets, fatigue and effects as the player.
  SIM.rvLog=[];
@@ -2563,7 +2564,7 @@ function aiCampaignDay(){
    consider(1,1/(1+(o.tc[tr.g]||0)*.8),{d:tr});
    consider(2,(late?1.4:1)/(1+cnt(cv,k,'cv')*.35),{d:cv});
    const mkBest=kind=>{let b=null,bs=-1;MK.forEach((m,mk)=>{if(!adOK(k,kind==='tv'?3:4,mk))return;const n=RD.filter(r=>MKG[r.g]===mk&&Math.abs(marg(r))<.1).length,F=mkfOf(k)[mk]||{tv:0,rd:0},v=n*(kind==='tv'?m.tv:m.rd)/(1+.6*(F[kind]||0))/Math.sqrt(costOf(kind==='tv'?3:4,mk));if(v>bs){bs=v;b=mk}});return b};
-   const tone=ld!==k&&rnd()<(pr[ld]-pr[k]>.04&&aiPush(k)?.75:.3)?ld:null;
+   const tgt=SIM.me!==k&&(SIM.me===ld||pr[SIM.me]>pr[k]-.05)?SIM.me:ld,tone=tgt!==k&&rnd()<(tgt===SIM.me||aiPush(k)?.75:.3)?tgt:null;
    consider(3,1.1,{mk:mkBest('tv'),tone});consider(4,.9,{mk:mkBest('rd'),tone});
    const tg=rnd()<.3?2:(rnd()<.5?0:1);
    consider(5,1/(1+o.an*.8),{tg});
@@ -2583,12 +2584,15 @@ function aiCampShocks(){if(!SIM.rvLog)SIM.rvLog=[];const pr=provShares(),ld=pr.i
  P.forEach((_,k)=>{if(k!==SIM.me){cv[k]=.85*cv[k]+(rnd()+rnd()-1)*.014;SIM.nat[k]+=cv[k]}});
  P.forEach((_,k)=>{if(k===SIM.me||rnd()>(late?.24:.16))return;const up=rnd()<Math.max(.25,Math.min(.65,.5-(pr[k]-.2)*1.2+(k===ld?-.05:0))),m=(.03+rnd()*.07)*(late?1.3:1),tx=(up?AIUP:AIDN)[(rnd()*4)|0];
   SIM.nat[k]+=up?m:-m;SIM.rvLog.push({k,a:99,t:tx})})}
-/* Campaigns tighten: a big lead brings scrutiny on the front-runner, its soft supporters drift off (trend, so it accumulates over the campaign), and anti-front-runner voters consolidate behind the runner-up. Applies to any leader, player or AI, and grows with the size of the lead above 4 points. */
-function campTighten(pr){const o=pr.map((v,k)=>[v,k]).sort((a,c)=>c[0]-a[0]),ld=o[0][1],ru=o[1][1],L=o[0][0]-o[1][0]-.04;
- /* Rapid response: when the front-runner (3+ pts ahead) gains ground in a day, the runner-up's war room rebuts part of it. */
- {const h=SIM.hist&&SIM.hist[SIM.hist.length-1],gain=h?pr[ld]-h[ld]:0;if(gain>.002&&o[0][0]-o[1][0]>.03){const gl=gain/(pr[ld]*(1-pr[ld]));SIM.nat[ld]-=gl*.35;SIM.nat[ru]+=gl*.2;(SIM.rvLog=SIM.rvLog||[]).push({k:ru,a:99,t:['riposte aux annonces de '+P[ld].n+'.','pushes back on '+P[ld].n+'’s gains.']})}}
+/* Campaigns tighten: a big lead brings scrutiny on the front-runner, its soft supporters drift off (trend, so it accumulates over the campaign), and anti-front-runner voters consolidate behind the runner-up. The player gets the scrutiny when leading but no free consolidation when trailing: comebacks have to be earned. */
+function campTighten(pr){const me=SIM.me,o=pr.map((v,k)=>[v,k]).sort((a,c)=>c[0]-a[0]),ld=o[0][1],ru=o[1][1],L=o[0][0]-o[1][0]-.04;
+ /* War room: when the player gains ground in a day while ahead or within 8 points of the lead, the strongest AI rival rebuts part of it (more when the player leads). */
+ {const h=SIM.hist&&SIM.hist[SIM.hist.length-1],gain=h&&me>=0?pr[me]-h[me]:0,rv=o.find(a=>a[1]!==me)[1];
+  if(gain>.002&&pr[me]>=o[0][0]-.08){const gl=gain/(pr[me]*(1-pr[me])),f=me===ld?.45:.3;SIM.nat[me]-=gl*f;SIM.nat[rv]+=gl*f*.5;(SIM.rvLog=SIM.rvLog||[]).push({k:rv,a:99,t:['riposte aux gains de '+P[me].n+'.','pushes back on '+P[me].n+'’s gains.']})}}
  if(L<=0)return;
- SIM.nat[ru]+=L*.05;SIM.nat[ld]-=L*.03;SIM.trend[ld]-=L*.025;SIM.trend[ru]+=L*.015;for(const [,k] of o.slice(2))SIM.nat[k]-=L*.006}
+ if(ld===me){SIM.nat[ld]-=L*.05;SIM.trend[ld]-=L*.045}else{SIM.nat[ld]-=L*.015;SIM.trend[ld]-=L*.01}
+ if(ru!==me){SIM.nat[ru]+=L*.065;SIM.trend[ru]+=L*.02}
+ for(const [,k] of o.slice(2))if(k!==me)SIM.nat[k]-=L*.006}
 /* The government's record on the issue of the day: a strong record on a top concern helps it, a weak one hurts it and lifts the party that owns the issue. Bounded (roughly ±3 pts over a campaign once tightening is counted) so good governing pays without guaranteeing a landslide. */
 function campRecord(){if(!recOK())return;const R0=SIM.rec,t=salTheme(),k=Object.keys(CNTH).find(c=>CNTH[c]===t);if(!k||R0.ind[k]==null)return;
  const v=Math.max(-1,Math.min(1,(R0.ind[k]-50)/35)),wt=Math.max(.6,Math.min(1.6,(R0.cn[k]||1)/1.1)),gv=R0.gv;SIM.nat[gv]+=.011*v*wt;
@@ -2597,7 +2601,7 @@ function campRecord(){if(!recOK())return;const R0=SIM.rec,t=salTheme(),k=Object.
 function nextDayCore(){if(SIM.day>DAYS)return;if((SIM.dbt&&!SIM.dbt.done)||(SIM.pend||[]).some(p=>p&&p.deb)){SIM.msg=x('Terminez d’abord le débat en cours.','Finish the debate in progress first.');return render()}SIM.msg='';st.atkOpen=false;const before=RD.map(d=>d.win),s0=provShares()[SIM.me],dec=v=>v*.97;
  aiCampaignDay();aiCampShocks();platformDrift();
  SIM.nat=SIM.nat.map(dec);SIM.reg=SIM.reg.map(r=>r.map(dec));RD.forEach(d=>d.l=d.l.map(dec));
- if(SIM.mode==='real')for(let k=0;k<5;k++){SIM.trend[k]+=Math.log(TG[k]/SIM.t0[k])/DAYS;SIM.nat[k]+=(rnd()-.5)*.006}else{const pr=provShares(),ld=pr.indexOf(Math.max(...pr));for(let k=0;k<P.length;k++){SIM.trend[k]+=(rnd()-.5)*.05;SIM.nat[k]+=.0015+Math.max(0,pr[ld]-pr[k])*.012;if(k!==ld)SIM.nat[ld]-=.0008}campTighten(pr);campRecord()}
+ if(SIM.mode==='real')for(let k=0;k<5;k++){SIM.trend[k]+=Math.log(TG[k]/SIM.t0[k])/DAYS;SIM.nat[k]+=(rnd()-.5)*.006}else{const pr=provShares(),ld=pr.indexOf(Math.max(...pr));for(let k=0;k<P.length;k++){SIM.trend[k]+=(rnd()-.5)*.05;SIM.nat[k]+=.0015+Math.max(0,pr[ld]-pr[k])*(k===SIM.me?.004:.012);if(k!==ld)SIM.nat[ld]-=ld===SIM.me?.0012:.0005}campTighten(pr);campRecord()}
  recalc();SIM.day++;SIM.ap=3;SIM.funds+=50;SIM.fat*=.9;SIM.an*=.95;SIM.fr=(SIM.fr||0)*.9;SIM.gt=(SIM.gt||0)*.9;SIM.atk=(SIM.atk||P.map(()=>0)).map(v=>v*.9);if(SIM.mkf)for(const k in SIM.mkf){SIM.mkf[k].tv*=.9;SIM.mkf[k].rd*=.9}SIM.tc=SIM.tc.map(v=>v*.95);P.forEach((_,k)=>{if(k===SIM.me)return;const o=ps(k);o.funds+=50;o.an*=.95;o.fr*=.9;o.tc=o.tc.map(v=>v*.95)});if(SIM.aiMkf)for(const k in SIM.aiMkf)for(const m in SIM.aiMkf[k]){SIM.aiMkf[k][m].tv*=.9;SIM.aiMkf[k][m].rd*=.9}sched(SIM.day);SIM.pend=SIM.pend.filter(p=>{if(SIM.day-p.t>2){if(p.deb)SIM.nat[SIM.me]-=.012;SIM.log.push(x(p.f,p.e)+(p.deb?x(' (chaise vide)',' (empty chair)'):x(' (ignoré)',' (ignored)')));return false}return true});
  const fl=RD.filter((d,i)=>d.win!==before[i]);
  SIM.last={rv:(SIM.rvLog||[]).slice(),acts:SIM.log,d:provShares()[SIM.me]-s0,flips:fl.slice(0,4).map(d=>d.nm+' → '+P[d.win].n),nf:fl.length};SIM.log=[];SIM.hist.push(provShares());addDailyPolls(SIM.day);
